@@ -1,0 +1,1 @@
+- package_info_plus/android/src/main/kotlin/dev/fluttercommunity/plus/packageinfo/PackageInfoPlugin.kt
