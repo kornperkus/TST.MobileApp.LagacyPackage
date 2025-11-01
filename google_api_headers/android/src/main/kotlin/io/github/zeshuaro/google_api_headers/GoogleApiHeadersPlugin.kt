@@ -35,24 +35,38 @@ class GoogleApiHeadersPlugin : MethodCallHandler, FlutterPlugin {
     override fun onMethodCall(call: MethodCall, result: Result) {
         if (call.method == "getSigningCertSha1") {
             try {
-                val packageManager = context!!.packageManager
-                val args = call.arguments<String>()!!
+                val packageManager = context?.packageManager ?: run {
+                    result.error("ERROR", "Context not attached", null)
+                    return
+                }
+                val args = call.arguments<String>() ?: run {
+                    result.error("ERROR", "Package name is required", null)
+                    return
+                }
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                    packageManager.getPackageInfo(
+                    val packageInfo = packageManager.getPackageInfo(
                         args,
                         PackageManager.GET_SIGNING_CERTIFICATES
-                    ).signingInfo.apkContentsSigners.forEach { signature ->
-                        parseSignature(
-                            signature,
-                            result
-                        )
+                    )
+                    val signingInfo = packageInfo.signingInfo
+                    val signatures = signingInfo?.apkContentsSigners
+                    if (signatures.isNullOrEmpty()) {
+                        result.error("ERROR", "No signing signatures found", null)
+                        return
                     }
+                    signatures.forEach { signature -> parseSignature(signature, result) }
                 } else {
                     @Suppress("DEPRECATION")
-                    packageManager.getPackageInfo(
+                    val packageInfo = packageManager.getPackageInfo(
                         args,
                         PackageManager.GET_SIGNATURES
-                    ).signatures.forEach { signature -> parseSignature(signature, result) }
+                    )
+                    val signatures = packageInfo.signatures
+                    if (signatures.isNullOrEmpty()) {
+                        result.error("ERROR", "No signing signatures found", null)
+                        return
+                    }
+                    signatures.forEach { signature -> parseSignature(signature, result) }
                 }
 
             } catch (e: Exception) {

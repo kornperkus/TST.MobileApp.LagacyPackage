@@ -1,0 +1,1 @@
+- android/src/main/kotlin/io/github/zeshuaro/google_api_headers/GoogleApiHeadersPlugin.kt
